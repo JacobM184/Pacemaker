@@ -1,0 +1,66 @@
+scchart VVIPacemaker {
+  		input signal ASense, VSense, PVARP_ex, AVI_ex, AEI_ex;
+  		input signal URI_ex, URI_active, LRI_ex, VRP_ex, PVARP_status;
+  		output signal VPace, APace;
+  		output signal PVARP_start, PVARP_stop;
+  		output signal AVI_start, AVI_stop;
+  		output signal AEI_start, AEI_stop;
+  		output signal LRI_start, LRI_stop;
+  		output signal URI_start, URI_stop;
+		output signal VRP_start, VRP_stop;
+	
+		initial state top{
+		  region AVI:
+		  initial state init --> waitAVI with ASense/AVI_start;
+		  state waitAVI 
+		  	--> waitPVARP with VSense/AVI_stop 
+		  	--> waitURI with URI_active && AVI_ex 
+		  	--> waitPVARP with URI_ex ||(!URI_active && AVI_ex);
+		  state waitURI --> waitPVARP with URI_ex/VPace;
+		  state waitPVARP --> waitAEI with PVARP_ex;
+		  state waitAEI 
+		  	--> connect with ASense 
+		  	--> connect with AEI_ex; // have to add more cond
+		  connector state connect --> waitAVI with /AVI_start;
+		  
+		  // control for AEI
+		  region AEI:
+		  initial state idle --> waitPVARP with VSense/AEI_start;
+		  state waitPVARP --> waitAEI with PVARP_stop;
+		  state waitAEI
+		  	--> pace with AEI_ex/APace
+		  	--> idle with ASense/AEI_stop;
+		  connector state pace --> idle with /AEI_stop;
+		  
+		  // turning on and off PVARP control signals
+		  region PVARP:
+		  initial state idle --> waitPVARP with VSense/PVARP_start;
+		  state waitPVARP --> idle with PVARP_ex/PVARP_stop;
+		  
+		  // turning on and off URI control signals
+		  region URI:
+		  initial state idle --> waitURI with VSense/URI_start;
+		  state waitURI --> idle with URI_ex/URI_stop;
+		  
+		  // turning on and off LRI control signals
+		  region LRI:
+		  initial state init
+		  	--> idle;
+		  connector state idle
+		  	--> LRIConnect with VSense
+		  	--> LRIConnect with VPace;
+		  connector state LRIConnect --> waitLRI with /LRI_start;
+		  state waitLRI 
+		  	--> idle with LRI_ex/VPace
+		  	--> idleConnector with VSense
+		  	--> idleConnector with VPace;
+		  connector state idleConnector --> idle with /LRI_stop;
+		  
+		  // turning on and off VRP control signals
+		  region VRP:
+		  initial state idle --> waitVRP with VSense/VRP_start;
+		  state waitVRP --> idle with VRP_ex/VRP_stop;
+		  
+		};
+	  
+}
