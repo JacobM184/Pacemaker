@@ -13,15 +13,15 @@ scchart VVIPacemaker {
 		  region AVI:
 		  initial state init --> waitAVI with ASense/AVI_start;
 		  state waitAVI 
-		  	--> waitPVARP with VSense/AVI_stop 
-		  	--> waitURI with URI_active && AVI_ex 
-		  	--> waitPVARP with URI_ex ||(!URI_active && AVI_ex);
+		  --> waitPVARP with VSense/AVI_stop 
+		  --> waitURI with URI_ex && AVI_ex;
 		  state waitURI --> waitPVARP with URI_ex/VPace;
 		  state waitPVARP --> waitAEI with PVARP_ex;
 		  state waitAEI 
-		  	--> connect with ASense 
-		  	--> connect with AEI_ex; // have to add more cond
+		  --> connect with ASense 
+		  --> connect with AEI_ex/APace;
 		  connector state connect --> waitAVI with /AVI_start;
+		  
 		  
 		  // control for AEI
 		  region AEI:
@@ -45,17 +45,16 @@ scchart VVIPacemaker {
 		  // turning on and off LRI control signals
 		  region LRI:
 		  initial state init
-		  	--> idle;
-		  connector state idle
-		  	--> LRIConnect with VSense
-		  	--> LRIConnect with VPace;
-		  connector state LRIConnect --> waitLRI with /LRI_start;
-		  state waitLRI 
-		  	--> idle with LRI_ex/VPace
-		  	--> idleConnector with VSense
-		  	--> idleConnector with VPace;
-		  connector state idleConnector --> idle with /LRI_stop;
+		  	--> LRIConnector1 with VSense
+		  	--> LRIConnector1 with VPace;
+		  connector state LRIConnector1 --> waitLRI with /LRI_start;
+		  state waitLRI
+		  	--> LRIConnector2 with VSense
+		  	--> LRIConnector2 with VPace;
+		  connector state LRIConnector2 --> restartLRI with /LRI_stop;
+		  state restartLRI --> waitLRI with /LRI_start;
 		  
+		 		  
 		  // turning on and off VRP control signals
 		  region VRP:
 		  initial state idle --> waitVRP with VSense/VRP_start;
