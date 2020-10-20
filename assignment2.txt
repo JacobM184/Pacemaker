@@ -1,12 +1,13 @@
-scchart VVIPacemaker {
+scchart DDDPacemaker {
   input signal ASense, VSense, PVARP_ex, AVI_ex, AEI_ex;
   input signal URI_ex, LRI_ex, VRP_ex, R;
   output signal URI_active;
   output signal VPace, APace;
   output signal PVARP_start, URI_start, VRP_start;
+  output signal PVARP_stop, URI_stop, VRP_stop;
   output signal AVI_start, AVI_stop;
   output signal AEI_start, AEI_stop;
-  output signal LRI_start, LRI_restart;
+  output signal LRI_start, LRI_stop;
   
   
   
@@ -45,14 +46,17 @@ scchart VVIPacemaker {
 		--> waitURI with VRP_ex && URI_active;
 	
 	state waitURI
-		--> waitLRI with !URI_active;
+		--> waitLRI with URI_ex;
 	
     state waitLRI
     	--> LRIConnector2 with VSense
     	--> LRIConnector2 with VPace;
 
     connector state LRIConnector2
-    	--> waitVRP with / LRI_restart;	  
+    	--> intermediary with / LRI_stop;
+    	
+    connector state intermediary
+    	--> waitVRP with /LRI_start;	  
 
 
 	// control for AVI
@@ -66,9 +70,8 @@ scchart VVIPacemaker {
 	    	--> waitAVI with /AVI_start;
 	    
 	    state waitAVI
-	    	--> AVIexit with (VSense && !URI_active) / AVI_stop
 	    	--> waitURI with (URI_active && AVI_ex)
-	    	--> VPConnect with LRI_ex / AVI_stop
+	    	--> VPConnect with LRI_ex/AVI_stop
 	    	--> VPConnect with (!URI_active && AVI_ex);
 	    
 	    state waitURI
@@ -82,6 +85,7 @@ scchart VVIPacemaker {
 		o-> PVARPConnector with VSense && !URI_active
 		o-> PVARPConnector with VPace && !URI_active
     	>-> PVARPConnector;
+    
     
     connector state PVARPConnector
     	--> waitPVARP with /PVARP_start;
@@ -107,7 +111,7 @@ scchart VVIPacemaker {
    	 	--> waitURI with ASense / AEI_stop;
     
 	state waitURI
-		--> idle with !URI_active;
+		--> idle with URI_ex;
 
 	// turning on and off VRP control signals
     region VRP:
@@ -123,7 +127,7 @@ scchart VVIPacemaker {
     	--> waitURI with VRP_ex;
     	
     state waitURI
-    	--> idle with !URI_active;
+    	--> idle with URI_ex;
   }
   o-> top with R;
 
