@@ -1,96 +1,285 @@
-/*
- * "Hello World" example.
- *
- * This example prints 'Hello from Nios II' to the STDOUT stream. It runs on
- * the Nios II 'standard', 'full_featured', 'fast', and 'low_cost' example
- * designs. It runs with or without the MicroC/OS-II RTOS and requires a STDOUT
- * device in your system's hardware.
- * The memory footprint of this hosted application is ~69 kbytes by default
- * using the standard reference design.
- *
- * For a reduced footprint version of this template, and an explanation of how
- * to reduce the memory footprint for a given application, see the
- * "small_hello_world" template.
- *
- */
-
 #include <stdio.h>
 #include <altera_avalon_pio_regs.h>
 #include "system.h"
-#include "values.h"
+#include "string.h"
 #include "sys/alt_alarm.h"
+#include "pacemaker.h"
+#include "value.h"
+#include <fcntl.h>
+#include <unistd.h>
+#include <stddef.h>
+#include <altera_avalon_uart.h>
 
-//Timer ISR
-void timer_controller(){
-	if(count >= VRP_VALUE){
-		VRP_ex = 1;
-	}
 
-	if(count >= PVARP_VALUE){
-		PVARP_ex = 1;
-	}
+alt_alarm tAVI, tPVARP, tVRP, tAEI, tLRI, tURI, tAPace, tVPace;
 
-	if(count >= AEI_VALUE){
-		AEI_ex = 1;
-	}
-	else if(AEI_stop){
-		AEI_stop = 0;
-	}
+unsigned int led_base = 0x0;
+char storedData;
+unsigned int dataFound = FALSE;
+unsigned int URI_Timer = 0;
+unsigned int LRI_Timer = 0;
 
-	if(count >= LRI_VALUE){
-		LRI_ex = 1;
-		count = 0;
-	}
-	else if(LRI_Stop){
-		LRI_stop = 0;
-		count = 0;
-	}
+unsigned int timerLED = 0x0;
 
-	if(count >= URI_VALUE){
-		URI_ex = 1;
+unsigned int PVARP_ex_F = FALSE;
+unsigned int AVI_ex_F = FALSE;
+unsigned int URI_ex_F = FALSE;
+unsigned int LRI_ex_F = FALSE;
+unsigned int VRP_ex_F = FALSE;
+unsigned int AEI_ex_F = FALSE;
+
+unsigned int PVARPActive = FALSE;
+unsigned int AVIActive = FALSE;
+unsigned int URIActive = FALSE;
+unsigned int LRIActive = FALSE;
+unsigned int VRPActive = FALSE;
+unsigned int AEIActive = FALSE;
+
+
+
+void updateEX(){
+	unsigned int* expFlags[6] = {
+		&PVARP_ex_F,
+		&AVI_ex_F,
+		&URI_ex_F,
+		&LRI_ex_F,
+		&VRP_ex_F,
+		&AEI_ex_F
+	};
+
+	char* expVar[6] = {
+		&PVARP_ex,
+		&AVI_ex,
+		&URI_ex,
+		&LRI_ex,
+		&VRP_ex,
+		&AEI_ex
+	};
+
+	for(int i = 0; i < 6; i++){
+		if(*(expFlags[i])){
+			*(expVar[i]) = (char)TRUE;
+			*(expFlags[i]) = FALSE;
+		}
 	}
 }
 
+void set_leds(){
+	if(AVIActive){
+		timerLED |= AVI_LED;
+	}
+	else{
+		timerLED &= ~AVI_LED;
+	}
 
-alt_32 timer_isr_A(void* context){
+	if(PVARPActive){
+		timerLED |= PVARP_LED;
+	}
+	else{
+		timerLED &= ~PVARP_LED;
+	}
+
+	if(VRPActive){
+		timerLED |= VRP_LED;
+	}
+	else{
+		timerLED &= ~VRP_LED;
+	}
+
+	if(AEIActive){
+		timerLED |= AEI_LED;
+	}
+	else{
+		timerLED &= ~AEI_LED;
+	}
+
+	if(LRIActive){
+		timerLED |= LRI_LED;
+	}
+	else{
+		timerLED &= ~LRI_LED;
+	}
+
+	if(URIActive){
+		timerLED |= URI_LED;
+	}
+	else{
+		timerLED &= ~URI_LED;
+	}
+}
+
+alt_u32 timer_isr_AVI(void* context){
 	//Send out a signal that tells that AVI expires
-	IOWR_ALTERA_AVALON_PIO_DATA(LEDS_GREEN_BASE, 0x1);
-	return 1000;
+	AVI_ex_F = TRUE;
+	AVIActive = FALSE;
+	return 0;
 }
 
-alt_32 timer_isr_V(void* context){
+alt_u32 timer_isr_PVARP(void* context){
 	//Send out a signal that tells that PVARP expires
-	IOWR_ALTERA_AVALON_PIO_DATA(LEDS_GREEN_BASE, 0x2);
-	return 1000;
+	PVARP_ex_F = TRUE;
+	PVARPActive = FALSE;
+	return 0;
 }
 
-//BUTTON ISR
-void button_isr(void* context , alt_u32 id){
-	int* temp = (int*)context;
-	(*temp) = IORD_ALTERA_AVALON_PIO_EDGE_CAP(BUTTONS_BASE);
+alt_u32 timer_isr_VRP(void* context){
+	//Send out a signal that tells that PVARP expires
+	VRP_ex_F = TRUE;
+	VRPActive = FALSE;
+	return 0;
+}
 
-	unsigned int key0 = (*temp) & 0x1;
-	unsigned int key1 = (*temp) & 0x2;
+alt_u32 timer_isr_AEI(void* context){
+	//Send out a signal that tells that PVARP expires
+	AEI_ex_F = TRUE;
+	AEIActive = FALSE;
+	return 0;
+}
 
-	IOWR_ALTERA_AVALON_PIO_EDGE_CAP(BUTTONS_BASE, 0);
-	if(key0){
-		IOWR_ALTERA_AVALON_PIO_DATA(LEDS_GREEN_BASE, 0x1);
+alt_u32 timer_isr_LRI(void* context){
+	//Send out a signal that tells that PVARP expires
+	LRI_ex_F = TRUE;
+	LRIActive = FALSE;
+	return 0;
+}
+
+alt_u32 timer_isr_URI(void* context){
+	//Send out a signal that tells that PVARP expires
+	URI_ex_F = TRUE;
+	URIActive = FALSE;
+	return 0;
+}
+
+alt_u32 timer_isr_VPace(void* context){
+	//Send out a signal that tells that PVARP expires
+	led_base &= ~(0x2);
+	return 0;
+}
+
+alt_u32 timer_isr_APace(void* context){
+	//Send out a signal that tells that PVARP expires
+	led_base &= ~(0x8);
+	return 0;
+}
+
+
+void transmit(int fd){
+	if((int)APace){
+		write(fd, 'A\n', 2);
 	}
-	else if(key1){
-		IOWR_ALTERA_AVALON_PIO_DATA(LEDS_GREEN_BASE, 0x2);
+
+	if((int)VPace){
+		write(fd, 'V\n', 2);
 	}
 }
 
-void buttons_isr_init(){
-	int buttonValue = 1;
-	void* context_going_to_be_passed = (void*) &buttonValue;
-	IOWR_ALTERA_AVALON_PIO_EDGE_CAP(BUTTONS_BASE, 0);
-	IOWR_ALTERA_AVALON_PIO_IRQ_MASK(BUTTONS_BASE, 0x3);
-	alt_irq_register(BUTTONS_IRQ, context_going_to_be_passed, button_isr);
+void receive(int fd){
+	void* temp = (void*)&storedData;
+	int readVal = read(fd, temp, 1);
+
+	if(readVal != -1){
+		if(storedData == 'A'){
+			//printf("A: DETECTED \n");
+			ASense = (char)1;
+			VSense = (char)0;
+		}
+		else if(storedData == 'V'){
+			//printf("V: DETECTED \n");
+			ASense = (char)0;
+			VSense = (char)1;
+		}
+	}
 }
 
-//LCD
-int lcd_set_mode(unsigned int *prevMode, FILE *lcd){
+//TICK
+void tickCycle(){
+	int time = 0;
+	void* timerContext = (void*)time;
+
+	//EX
+	updateEX();
+
+	//TICK
+	tick();
+
+	//RESET INPUTS
+	R = (char)FALSE;
+
+	AVI_ex = (char)FALSE;
+	VRP_ex = (char)FALSE;
+	PVARP_ex = (char)FALSE;
+	AEI_ex = (char)FALSE;
+	URI_ex = (char)FALSE;
+	LRI_ex = (char)FALSE;
+
+	ASense = (char)FALSE;
+	VSense = (char)FALSE;
+
+	//OUTPUT
+	if((int)VPace){
+		alt_alarm_start(&tVPace, 100, timer_isr_VPace, timerContext);
+		led_base |= 0x2;
+	}
+
+	if((int)APace){
+		alt_alarm_start(&tAPace, 100, timer_isr_APace, timerContext);
+		led_base |= 0x8;
+	}
+
+
+	//AVI
+	if((int)AVI_start && !AVIActive){
+		alt_alarm_start(&tAVI, AVI_VALUE, timer_isr_AVI, timerContext);
+		AVIActive = TRUE;
+	}
+
+	if((int)AVI_stop && AVIActive){
+		alt_alarm_stop(&tAVI);
+		AVIActive = FALSE;
+	}
+
+	//VRP
+	if((int)VRP_start && !VRPActive){
+		alt_alarm_start(&tVRP, VRP_VALUE, timer_isr_VRP, timerContext);
+		VRPActive = TRUE;
+	}
+
+	//PVARP
+	if((int)PVARP_start && !PVARPActive){
+		alt_alarm_start(&tPVARP, PVARP_VALUE, timer_isr_PVARP, timerContext);
+		PVARPActive =  TRUE;
+	}
+
+	//AEI
+	if((int)AEI_start && !AEIActive){
+		alt_alarm_start(&tAEI, AEI_VALUE, timer_isr_AEI, timerContext);
+		AEIActive = TRUE;
+	}
+
+	if((int)AEI_stop && AEIActive){
+		alt_alarm_stop(&tAEI);
+		AEIActive = FALSE;
+	}
+
+	//LRI
+	if((int)LRI_stop && LRIActive){
+		alt_alarm_stop(&tLRI);
+		LRIActive = FALSE;
+	}
+
+	if((int)LRI_start && !LRIActive){
+		alt_alarm_start(&tLRI, LRI_VALUE, timer_isr_LRI, timerContext);
+		LRIActive = TRUE;
+	}
+
+	//URI
+	if((int)URI_start && !URIActive){
+		alt_alarm_start(&tURI, URI_VALUE, timer_isr_URI, timerContext);
+		URIActive = TRUE;
+	}
+}
+
+void lcd_set_mode(unsigned int *prevMode, FILE *lcd){
 	int currentMode = IORD_ALTERA_AVALON_PIO_DATA(SWITCHES_BASE) & 0x3;
 
 	if ((lcd != NULL) && (currentMode != *prevMode)){
@@ -111,41 +300,77 @@ int lcd_set_mode(unsigned int *prevMode, FILE *lcd){
 			break;
 		}
 
+		R = (char)TRUE;
+		IOWR_ALTERA_AVALON_PIO_DATA(LEDS_GREEN_BASE, 0x0);
+		IOWR_ALTERA_AVALON_PIO_DATA(LEDS_RED_BASE, 0x0);
 		*prevMode = currentMode;
 	}
 }
 int main(){
 	FILE *lcd;
 	lcd = fopen(LCD_NAME, "w");
-	int plh = 500;
-	void* timerContext = (void*)&plh;
-	unsigned int output = IORD_ALTERA_AVALON_PIO_DATA(SWITCHES_BASE) & 0x3;
-	alt_alarm tAVI, tPVARP, tVRP, tAEI, tLRI, tURI;
+	unsigned int prevMode = IORD_ALTERA_AVALON_PIO_DATA(SWITCHES_BASE) & 0x3;
 
-	buttons_isr_init();
-	alt_alarm_start(&tAVI, 500, timer_isr_AVI, timerContext);
-	alt_alarm_start(&tPVARP, 1000, timer_isr_PVARP, timerContext);
-	alt_alarm_start(&tVRP, 1500, timer_isr_VRP, timerContext);
-	alt_alarm_start(&tAEI, 2000, timer_isr_AEI, timerContext);
-	alt_alarm_start(&tLRI, 2500, timer_isr_LRI, timerContext);
-	alt_alarm_start(&tURI, 3000, timer_isr_URI, timerContext);
+	int fd = open(UART_NAME, O_NONBLOCK | O_RDWR);
+
+	if(fd == -1){
+		printf("Error: File descriptor invalid!");
+	}
+	else{
+		printf("SUCCESSFUL: File Descriptor Found");
+	}
+
+	IOWR_ALTERA_AVALON_PIO_DATA(LEDS_GREEN_BASE, 0x0);
+	IOWR_ALTERA_AVALON_PIO_DATA(LEDS_RED_BASE, 0x0);
+
+
+	// enable UART receiver interrupt
+	//IOWR_UART_CONTROL(UART_BASE, (IORD_UART_CONTROL(UART_BASE) & IRRDY));
+
+	// register UART interrupt
+	//unsigned int contextNum = 0;
+	//void* context = (void*) &contextNum;
+	//alt_irq_register(UART_IRQ, context, receiver_interrupt);
+
+	reset();
 
 	for(;;){
-		lcd_set_mode(&output, lcd);
+		lcd_set_mode(&prevMode, lcd);
 
-		switch (output){
-		//BUTTONS
+		switch(prevMode){
 		case 1:
+			VSense = (char)!((IORD_ALTERA_AVALON_PIO_DATA(BUTTONS_BASE)) & 0x1);
+			ASense = (char)!((IORD_ALTERA_AVALON_PIO_DATA(BUTTONS_BASE)) & 0x2);
 
+			tickCycle();
+
+			set_leds();
+			IOWR_ALTERA_AVALON_PIO_DATA(LEDS_GREEN_BASE, timerLED);
+			IOWR_ALTERA_AVALON_PIO_DATA(LEDS_RED_BASE, led_base);
 			break;
-
-		//UART
 		case 2:
-			break;
+			receive(fd);
+			tickCycle();
 
-		//DISABLED
+			if((int)APace){
+				write(fd, "A\n", 2);
+			}
+
+			if((int)VPace){
+				write(fd, "V\n", 2);
+			}
+
+			set_leds();
+			IOWR_ALTERA_AVALON_PIO_DATA(LEDS_GREEN_BASE, timerLED);
+			IOWR_ALTERA_AVALON_PIO_DATA(LEDS_RED_BASE, led_base);
+			break;
 		default:
+
 			break;
 		}
+
+
+
+
 	}
 }
