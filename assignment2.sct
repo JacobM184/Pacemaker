@@ -1,66 +1,134 @@
-scchart VVIPacemaker {
-  		input signal ASense, VSense, PVARP_ex, AVI_ex, AEI_ex;
-  		input signal URI_ex, URI_active, LRI_ex, VRP_ex, PVARP_status;
-  		output signal VPace, APace;
-  		output signal PVARP_start, PVARP_stop;
-  		output signal AVI_start, AVI_stop;
-  		output signal AEI_start, AEI_stop;
-  		output signal LRI_start, LRI_stop;
-  		output signal URI_start, URI_stop;
-		output signal VRP_start, VRP_stop;
+scchart DDDPacemaker {
+  input signal ASense, VSense, PVARP_ex, AVI_ex, AEI_ex;
+  input signal URI_ex, LRI_ex, VRP_ex, R;
+  output signal URI_active;
+  output signal VPace, APace;
+  output signal PVARP_start, URI_start, VRP_start;
+  output signal PVARP_stop, URI_stop, VRP_stop;
+  output signal AVI_start, AVI_stop;
+  output signal AEI_start, AEI_stop;
+  output signal LRI_start, LRI_stop;
+  
+  
+  
+  initial state top { 
 	
-		initial state top{
-		  region AVI:
-		  initial state init --> waitAVI with ASense/AVI_start;
-		  state waitAVI 
-		  	--> waitPVARP with VSense/AVI_stop 
-		  	--> waitURI with URI_active && AVI_ex 
-		  	--> waitPVARP with URI_ex ||(!URI_active && AVI_ex);
-		  state waitURI --> waitPVARP with URI_ex/VPace;
-		  state waitPVARP --> waitAEI with PVARP_ex;
-		  state waitAEI 
-		  	--> connect with ASense 
-		  	--> connect with AEI_ex; // have to add more cond
-		  connector state connect --> waitAVI with /AVI_start;
-		  
-		  // control for AEI
-		  region AEI:
-		  initial state idle --> waitPVARP with VSense/AEI_start;
-		  state waitPVARP --> waitAEI with PVARP_stop;
-		  state waitAEI
-		  	--> pace with AEI_ex/APace
-		  	--> idle with ASense/AEI_stop;
-		  connector state pace --> idle with /AEI_stop;
-		  
-		  // turning on and off PVARP control signals
-		  region PVARP:
-		  initial state idle --> waitPVARP with VSense/PVARP_start;
-		  state waitPVARP --> idle with PVARP_ex/PVARP_stop;
-		  
-		  // turning on and off URI control signals
-		  region URI:
-		  initial state idle --> waitURI with VSense/URI_start;
-		  state waitURI --> idle with URI_ex/URI_stop;
-		  
-		  // turning on and off LRI control signals
-		  region LRI:
-		  initial state init
-		  	--> idle;
-		  connector state idle
-		  	--> LRIConnect with VSense
-		  	--> LRIConnect with VPace;
-		  connector state LRIConnect --> waitLRI with /LRI_start;
-		  state waitLRI 
-		  	--> idle with LRI_ex/VPace
-		  	--> idleConnector with VSense
-		  	--> idleConnector with VPace;
-		  connector state idleConnector --> idle with /LRI_stop;
-		  
-		  // turning on and off VRP control signals
-		  region VRP:
-		  initial state idle --> waitVRP with VSense/VRP_start;
-		  state waitVRP --> idle with VRP_ex/VRP_stop;
-		  
-		};
-	  
+	
+	region URI:
+	initial state idle
+		--> URIConnect with VSense 
+		--> URIConnect with VPace;
+		
+	connector state URIConnect 
+		--> waitURI with /URI_start;
+	
+	state waitURI{
+    	initial state URI_hold
+    		--> exitWaitURI with URI_ex
+    		--> URI_hold with / URI_active;
+    	
+    	final state exitWaitURI;
+	}
+	>-> idle;
+	    
+	// turning on and off LRI control signals
+    region LRI:
+
+    initial state idle
+    	--> LRIConnector1 with VSense
+    	--> LRIConnector1 with VPace;
+
+    connector state LRIConnector1
+    	--> waitVRP with / LRI_start;
+	
+	state waitVRP
+		--> waitLRI with VRP_ex && !URI_active
+		--> waitURI with VRP_ex && URI_active;
+	
+	state waitURI
+		--> waitLRI with URI_ex;
+	
+    state waitLRI
+    	--> LRIConnector2 with VSense
+    	--> LRIConnector2 with VPace;
+
+    connector state LRIConnector2
+    	--> intermediary with / LRI_stop;
+    	
+    connector state intermediary
+    	--> waitVRP with /LRI_start;	  
+
+
+	// control for AVI
+    region AVI_PVARP:
+	initial state AVI{
+		initial state init
+	    	--> initConnect with ASense
+	    	--> initConnect with APace;
+	    
+	    connector state initConnect
+	    	--> waitAVI with /AVI_start;
+	    
+	    state waitAVI
+	    	--> waitURI with (URI_active && AVI_ex)
+	    	--> VPConnect with LRI_ex/AVI_stop
+	    	--> VPConnect with (!URI_active && AVI_ex);
+	    
+	    state waitURI
+	    	--> VPConnect with URI_ex;
+	    
+	    state VPConnect
+	    	--> AVIexit with /VPace;
+	    	
+	    final state AVIexit;
+	}
+		o-> PVARPConnector with VSense && !URI_active
+		o-> PVARPConnector with VPace && !URI_active
+    	>-> PVARPConnector;
+    
+    
+    connector state PVARPConnector
+    	--> waitPVARP with /PVARP_start;
+    
+    state waitPVARP
+    	--> AVI with PVARP_ex;
+    
+	// control for AEI
+    region AEI:
+
+    initial state idle
+    	--> AEIConnect with VSense
+    	--> AEIConnect with VPace;
+    	
+    connector state AEIConnect
+    	--> waitPVARP with / AEI_start;
+
+    state waitPVARP
+    	--> waitAEI with PVARP_ex;
+
+    state waitAEI
+    	--> waitURI with AEI_ex / APace
+   	 	--> waitURI with ASense / AEI_stop;
+    
+	state waitURI
+		--> idle with URI_ex;
+
+	// turning on and off VRP control signals
+    region VRP:
+
+    initial state idle
+    	--> IDLEConnect with VSense
+    	--> IDLEConnect with VPace;
+    	
+    connector state IDLEConnect
+    	--> waitVRP with / VRP_start;
+
+    state waitVRP
+    	--> waitURI with VRP_ex;
+    	
+    state waitURI
+    	--> idle with URI_ex;
+  }
+  o-> top with R;
+
 }
