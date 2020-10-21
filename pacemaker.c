@@ -169,8 +169,8 @@ char PRE_g106;
 char g107;
 char g108;
 char g109;
-char PRE_g109;
 char g110;
+char PRE_g110;
 char g111;
 char g112;
 char g113;
@@ -178,10 +178,11 @@ char g114;
 char g115;
 char g116;
 char g117;
-char PRE_g117;
 char g118;
+char PRE_g118;
 char g119;
 char g120;
+char g121;
 char _GO;
 char _cg12;
 char _cg21;
@@ -233,14 +234,15 @@ char _cg88;
 char _cg92;
 char _cg97;
 char _cg95;
-char _cg111;
+char _cg108;
 char _cg112;
 char _cg113;
+char _cg114;
 char _cg102;
 char _cg107;
-char _cg110;
+char _cg111;
 char _cg104;
-char _cg108;
+char _cg109;
 char g54_e1;
 char g67_e2;
 char g6_e1;
@@ -248,9 +250,9 @@ char g25_e2;
 char g40_e3;
 char g87_e4;
 char g103_e5;
-char g115_e1_fix;
-char g115_e1;
-char g119_e2;
+char g116_e1_fix;
+char g116_e1;
+char g120_e2;
 int _PRE_GO;
 void reset(){
    _GO = 1;
@@ -273,8 +275,8 @@ void reset(){
    PRE_g93 = 0;
    PRE_g101 = 0;
    PRE_g106 = 0;
-   PRE_g109 = 0;
-   PRE_g117 = 0;
+   PRE_g110 = 0;
+   PRE_g118 = 0;
    return;
 }
 void tick(){
@@ -292,17 +294,17 @@ void tick(){
       _cg10 =(R||VSense);
       g19 =(g10&&(!(_cg10)));
       _cg19 = URI_ex;
-      g11 =((g10&&_cg10)||(g19&&_cg19));
+      g11 =((g19&&_cg19)||(g10&&_cg10));
       _cg11 = R;
       g6 =((g5&&_cg5)||(g11&&_cg11));
       g24 =(PRE_g23);
       g29 =(PRE_g28);
       g32 =(PRE_g31);
       g25_e2 =(!((g24||g29||g32)));
-      _cg29 = R;
       _cg24 = R;
       _cg32 = R;
-      g25 =((g29&&_cg29)||(g24&&_cg24)||(g32&&_cg32));
+      _cg29 = R;
+      g25 =((g24&&_cg24)||(g32&&_cg32)||(g29&&_cg29));
       g39 =(PRE_g38);
       g44 =(PRE_g43);
       g47 =(PRE_g46);
@@ -311,13 +313,13 @@ void tick(){
       g57 =(PRE_g56);
       g70 =(PRE_g69);
       g40_e3 =(!((g39||g44||g47||g53||g65||g57||g70)));
+      _cg47 = R;
       _cg39 = R;
-      _cg44 = R;
       g54_e1 =(!((g53||g57)));
-      g116 = g0;
-      g118 =(PRE_g117);
-      g117 =(g116||g118);
-      if(g117){
+      g117 = g0;
+      g119 =(PRE_g118);
+      g118 =(g117||g119);
+      if(g118){
          VPace = 0;
          APace = 0;
          PVARP_start = 0;
@@ -347,28 +349,30 @@ void tick(){
       }
       g53b = g53;
       _cg53 =((R||VSense)||(VPace&&(!(URI_active))));
+      g57b = g57;
+      _cg57 =((R||VSense)||(VPace&&(!(URI_active))));
       g55 =(g53b&&(!(_cg53)));
       _cg55 =(URI_active&&AVI_ex);
       g60 =(g55&&(!(_cg55)));
       _cg60 = LRI_ex;
+      g62 =(g60&&(!(_cg60)));
+      _cg62 =((!(URI_active))&&AVI_ex);
       g61 =(g60&&_cg60);
       if(g61){
          AVI_stop =(AVI_stop||1);
       }
-      g57b = g57;
-      _cg57 =((R||VSense)||(VPace&&(!(URI_active))));
       g58 =(g57b&&(!(_cg57)));
       _cg58 = URI_ex;
-      g62 =(g60&&(!(_cg60)));
-      _cg62 =((!(URI_active))&&AVI_ex);
-      g59 =(g61||(g58&&_cg58)||(g62&&_cg62));
+      g59 =((g62&&_cg62)||g61||(g58&&_cg58));
       if(g59){
          VPace =(VPace||1);
       }
-      g54 =(g59||(g53b&&_cg53)||(g57b&&_cg57));
+      g54 =((g53b&&_cg53)||(g57b&&_cg57)||g59);
       g67_e2 =(!((g65||g70)));
       g70b = g70;
       _cg70 =((R||VSense)||(VPace&&(!(URI_active))));
+      g71 =(g70b&&(!(_cg70)));
+      _cg71 = VPace;
       g65b = g65;
       _cg65 =(((R||VSense)||(VPace&&(!(URI_active))))||VPace);
       g72 =(g65b&&(!(_cg65)));
@@ -377,13 +381,11 @@ void tick(){
       _cg66 =((R||VSense)||(VPace&&(!(URI_active))));
       g68 =(g66&&(!(_cg66)));
       _cg68 = VPace;
-      g71 =(g70b&&(!(_cg70)));
-      _cg71 = VPace;
-      g67 =((g70b&&_cg70)||(g66&&_cg66)||(g68&&_cg68)||(g71&&_cg71));
+      g67 =((g71&&_cg71)||(g66&&_cg66)||(g70b&&_cg70)||(g68&&_cg68));
       g74 =((g54_e1||g54)&&(g67_e2||g67)&&(g54||g67));
       _cg74 = R;
-      _cg47 = R;
-      g40 =((g39&&_cg39)||(g44&&_cg44)||(g74&&_cg74)||(g47&&_cg47));
+      _cg44 = R;
+      g40 =((g47&&_cg47)||(g39&&_cg39)||(g74&&_cg74)||(g44&&_cg44));
       g86 =(PRE_g85);
       g91 =(PRE_g90);
       g94 =(PRE_g93);
@@ -394,20 +396,20 @@ void tick(){
       g87 =((g86&&_cg86)||(g94&&_cg94)||(g91&&_cg91));
       g102 =(PRE_g101);
       g107 =(PRE_g106);
-      g110 =(PRE_g109);
-      g103_e5 =(!((g102||g107||g110)));
+      g111 =(PRE_g110);
+      g103_e5 =(!((g102||g107||g111)));
       _cg107 = R;
-      _cg110 = R;
+      _cg111 = R;
       _cg102 = R;
-      g103 =((g107&&_cg107)||(g110&&_cg110)||(g102&&_cg102));
-      g114 =((g6_e1||g6)&&(g25_e2||g25)&&(g40_e3||g40)&&(g87_e4||g87)&&(g103_e5||g103)&&(g6||g25||g40||g87||g103));
-      g2 =(g114||g1);
+      g103 =((g107&&_cg107)||(g111&&_cg111)||(g102&&_cg102));
+      g115 =((g6_e1||g6)&&(g25_e2||g25)&&(g40_e3||g40)&&(g87_e4||g87)&&(g103_e5||g103)&&(g6||g25||g40||g87||g103));
+      g2 =(g1||g115);
       g3 = g2;
       g7 =(g5&&(!(_cg5)));
       _cg7 = VSense;
       g21 =(g7&&(!(_cg7)));
       _cg21 = VPace;
-      g4 =(g3||(g21&&(!(_cg21)))||(g12&&(!(_cg12))));
+      g4 =((g21&&(!(_cg21)))||(g12&&(!(_cg12)))||g3);
       g73 =(g72&&(!(_cg72)));
       if(g73){
          AVI_active =(AVI_active||1);
@@ -432,18 +434,18 @@ void tick(){
       if(g16){
          URI_stop =(URI_stop||1);
       }
-      g8 =((g21&&_cg21)||g16||(g7&&_cg7));
+      g8 =((g21&&_cg21)||(g7&&_cg7)||g16);
       if(g8){
          URI_start =(URI_start||1);
       }
-      g9 =(g20||g8||(g14&&_cg14));
+      g9 =((g14&&_cg14)||g20||g8);
       g17 =(g15&&(!(_cg15)));
       g22 = g2;
       g26 =(g24&&(!(_cg24)));
       _cg26 = VSense;
       g36 =(g26&&(!(_cg26)));
       _cg36 = VPace;
-      g23 =(g22||(g36&&(!(_cg36))));
+      g23 =((g36&&(!(_cg36)))||g22);
       g27 =((g26&&_cg26)||(g36&&_cg36));
       if(g27){
          LRI_start =(LRI_start||1);
@@ -452,7 +454,7 @@ void tick(){
       _cg33 =(VSense&&AVI_active);
       g35 =(g33&&(!(_cg33)));
       _cg35 =(VPace&&AVI_active);
-      g34 =((g33&&_cg33)||(g35&&_cg35));
+      g34 =((g35&&_cg35)||(g33&&_cg33));
       if(g34){
          LRI_stop =(LRI_stop||1);
       }
@@ -462,8 +464,8 @@ void tick(){
       }
       g30 =(g29&&(!(_cg29)));
       _cg30 = VRP_ex;
-      g28 =(g34b||g27||(g30&&(!(_cg30))));
-      g31 =((g35&&(!(_cg35)))||(g30&&_cg30));
+      g28 =(g34b||(g30&&(!(_cg30)))||g27);
+      g31 =((g30&&_cg30)||(g35&&(!(_cg35))));
       g37 = g2;
       g95 =(g94&&(!(_cg94)));
       _cg95 = AEI_ex;
@@ -480,7 +482,7 @@ void tick(){
       g83 =(g81&&(!(_cg81)));
       _cg83 = ASense;
       g38 =(g37||(g83&&(!(_cg83))));
-      g42 =(g76||(g77&&(!(_cg77)))||g78||(g80&&_cg80)||(g41&&_cg41));
+      g42 =((g41&&_cg41)||(g77&&(!(_cg77)))||(g80&&_cg80)||g76||g78);
       if(g42){
          PVARP_start =(PVARP_start||1);
       }
@@ -496,58 +498,60 @@ void tick(){
       if(g49){
          AVI_start =(AVI_start||1);
       }
-      g82 =((g81&&_cg81)||(g83&&_cg83));
+      g82 =((g83&&_cg83)||(g81&&_cg81));
       if(g82){
          AVI_start =(AVI_start||1);
       }
       g50 =(g82||g49);
       g51 = g50;
       g52 =(g51||(g62&&(!(_cg62))));
-      g56 =((g58&&(!(_cg58)))||(g55&&_cg55));
+      g56 =((g55&&_cg55)||(g58&&(!(_cg58))));
       g63 = g50;
       g64 =(g73||g63);
       g69 =((g68&&(!(_cg68)))||(g71&&(!(_cg71))));
       g84 = g2;
-      g88 =(g86&&(!(_cg86)));
-      _cg88 = VSense;
-      g99 =(g88&&(!(_cg88)));
-      _cg99 = VPace;
       g97 =(g95&&(!(_cg95)));
       _cg97 = ASense;
       g98 =(g97&&_cg97);
       if(g98){
          AEI_stop =(AEI_stop||1);
       }
-      g85 =(g84||g96||(g99&&(!(_cg99)))||g98);
-      g89 =((g99&&_cg99)||(g88&&_cg88));
+      g88 =(g86&&(!(_cg86)));
+      _cg88 = VSense;
+      g99 =(g88&&(!(_cg88)));
+      _cg99 = VPace;
+      g85 =(g96||g98||(g99&&(!(_cg99)))||g84);
+      g89 =((g88&&_cg88)||(g99&&_cg99));
       if(g89){
          AEI_start =(AEI_start||1);
       }
       g92 =(g91&&(!(_cg91)));
       _cg92 = PVARP_ex;
-      g90 =((g92&&(!(_cg92)))||g89);
+      g90 =(g89||(g92&&(!(_cg92))));
       g93 =((g92&&_cg92)||(g97&&(!(_cg97))));
       g100 = g2;
-      g111 =(g110&&(!(_cg110)));
-      _cg111 = ASense;
+      g112 =(g111&&(!(_cg111)));
+      _cg112 = ASense;
+      g108 =(g107&&(!(_cg107)));
+      _cg108 =(VRP_ex&&AVI_active);
+      g113 =(g112&&(!(_cg112)));
+      _cg113 = APace;
       g104 =(g102&&(!(_cg102)));
       _cg104 = VSense;
-      g113 =(g104&&(!(_cg104)));
-      _cg113 = VPace;
-      g112 =(g111&&(!(_cg111)));
-      _cg112 = APace;
-      g101 =((g111&&_cg111)||(g113&&(!(_cg113)))||g100||(g112&&_cg112));
-      g105 =((g104&&_cg104)||(g113&&_cg113));
+      g114 =(g104&&(!(_cg104)));
+      _cg114 = VPace;
+      g101 =((g112&&_cg112)||(g108&&_cg108)||(g113&&_cg113)||g100||(g114&&(!(_cg114))));
+      g105 =((g104&&_cg104)||(g114&&_cg114));
       if(g105){
          VRP_start =(VRP_start||1);
       }
-      g108 =(g107&&(!(_cg107)));
-      _cg108 = VRP_ex;
-      g106 =(g105||(g108&&(!(_cg108))));
-      g109 =((g108&&_cg108)||(g112&&(!(_cg112))));
-      g115_e1_fix =(g91||g107||g32||g47||g94||g110||g53||g65||g18||g57);
-      g115_e1 =(!((g5||g24||g39||g86||g102||g10||g29||g44||g70||g115_e1_fix)));
-      g119_e2 =(!(g118));
+      g109 =(g108&&(!(_cg108)));
+      _cg109 = VRP_ex;
+      g106 =(g105||(g109&&(!(_cg109))));
+      g110 =((g109&&_cg109)||(g113&&(!(_cg113))));
+      g116_e1_fix =(g91||g107||g32||g47||g94||g53||g65||g111||g18||g57);
+      g116_e1 =(!((g5||g24||g39||g86||g102||g10||g29||g44||g70||g116_e1_fix)));
+      g120_e2 =(!(g119));
    }
    PRE_g4 = g4;
    PRE_g9 = g9;
@@ -567,8 +571,8 @@ void tick(){
    PRE_g93 = g93;
    PRE_g101 = g101;
    PRE_g106 = g106;
-   PRE_g109 = g109;
-   PRE_g117 = g117;
+   PRE_g110 = g110;
+   PRE_g118 = g118;
    _PRE_GO = _GO;
    return;
 }
