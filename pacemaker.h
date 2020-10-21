@@ -1,9 +1,3 @@
-/*
- * pacemaker.h
- *
- *  Created on: 19/10/2020
- *      Author: Biggie Cheese
- */
 
 #ifndef PACEMAKER_H_
 #define PACEMAKER_H_
