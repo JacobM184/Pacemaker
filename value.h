@@ -26,6 +26,8 @@
 //#define LRI_B_LED 0x20
 #define URI_LED 0x20
 //#define URI_B_LED 0x80
+#define VPACE_LED 0x1
+#define APACE_LED 0x4
 
 // define UART status bits
 #define IRRDY 0x40
