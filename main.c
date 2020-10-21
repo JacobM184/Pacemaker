@@ -152,13 +152,13 @@ alt_u32 timer_isr_URI(void* context){
 
 alt_u32 timer_isr_VPace(void* context){
 	//Send out a signal that tells that PVARP expires
-	led_base &= ~(0x2);
+	led_base &= ~(VPACE_LED);
 	return 0;
 }
 
 alt_u32 timer_isr_APace(void* context){
 	//Send out a signal that tells that PVARP expires
-	led_base &= ~(0x8);
+	led_base &= ~(APACE_LED);
 	return 0;
 }
 
@@ -216,14 +216,16 @@ void tickCycle(){
 	VSense = (char)FALSE;
 
 	//OUTPUT
+	//int led_base = 0x0;
+
 	if((int)VPace){
 		alt_alarm_start(&tVPace, 100, timer_isr_VPace, timerContext);
-		led_base |= 0x2;
+		led_base |= VPACE_LED;
 	}
 
 	if((int)APace){
 		alt_alarm_start(&tAPace, 100, timer_isr_APace, timerContext);
-		led_base |= 0x8;
+		led_base |= APACE_LED;
 	}
 
 
@@ -273,6 +275,11 @@ void tickCycle(){
 	}
 
 	//URI
+	if((int)URI_stop && URIActive){
+		alt_alarm_stop(&tURI);
+		URIActive = FALSE;
+	}
+
 	if((int)URI_start && !URIActive){
 		alt_alarm_start(&tURI, URI_VALUE, timer_isr_URI, timerContext);
 		URIActive = TRUE;
@@ -345,8 +352,8 @@ int main(){
 			tickCycle();
 
 			set_leds();
-			IOWR_ALTERA_AVALON_PIO_DATA(LEDS_GREEN_BASE, timerLED);
-			IOWR_ALTERA_AVALON_PIO_DATA(LEDS_RED_BASE, led_base);
+			IOWR_ALTERA_AVALON_PIO_DATA(LEDS_GREEN_BASE, led_base);
+			IOWR_ALTERA_AVALON_PIO_DATA(LEDS_RED_BASE, timerLED);
 			break;
 		case 2:
 			receive(fd);
@@ -361,8 +368,8 @@ int main(){
 			}
 
 			set_leds();
-			IOWR_ALTERA_AVALON_PIO_DATA(LEDS_GREEN_BASE, timerLED);
-			IOWR_ALTERA_AVALON_PIO_DATA(LEDS_RED_BASE, led_base);
+			IOWR_ALTERA_AVALON_PIO_DATA(LEDS_GREEN_BASE, led_base);
+			IOWR_ALTERA_AVALON_PIO_DATA(LEDS_RED_BASE, timerLED);
 			break;
 		default:
 
