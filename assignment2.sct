@@ -1,7 +1,6 @@
 scchart DDDPacemaker {
   input signal ASense, VSense, PVARP_ex, AVI_ex, AEI_ex;
   input signal URI_ex, LRI_ex, VRP_ex, R;
-  output signal URI_active;
   output signal VPace, APace;
   output signal PVARP_start, URI_start, VRP_start;
   output signal PVARP_stop, URI_stop, VRP_stop;
@@ -9,11 +8,11 @@ scchart DDDPacemaker {
   output signal AEI_start, AEI_stop;
   output signal LRI_start, LRI_stop;
   
+  output signal URI_active;
+  output signal AVI_active;
   
   
-  initial state top { 
-	
-	
+  initial state top { 	
 	region URI:
 	initial state idle
 		--> URIConnect with VSense 
@@ -29,12 +28,17 @@ scchart DDDPacemaker {
     	
     	final state exitWaitURI;
 	}
+	o-> AVIActiveConnect with VSense / URI_active
 	>-> idle;
-	    
+	
+	connector state AVIActiveConnect
+		--> waitURI with !AVI_active
+		--> URIConnect with AVI_active / URI_stop;
+	
 	// turning on and off LRI control signals
     region LRI:
 
-    initial state idle
+    initial state init
     	--> LRIConnector1 with VSense
     	--> LRIConnector1 with VPace;
 
@@ -42,15 +46,11 @@ scchart DDDPacemaker {
     	--> waitVRP with / LRI_start;
 	
 	state waitVRP
-		--> waitLRI with VRP_ex && !URI_active
-		--> waitURI with VRP_ex && URI_active;
+		--> waitAVI with VRP_ex;
 	
-	state waitURI
-		--> waitLRI with URI_ex;
-	
-    state waitLRI
-    	--> LRIConnector2 with VSense
-    	--> LRIConnector2 with VPace;
+    state waitAVI
+    	--> LRIConnector2 with VSense && AVI_active
+    	--> LRIConnector2 with VPace && AVI_active;
 
     connector state LRIConnector2
     	--> intermediary with / LRI_stop;
@@ -61,15 +61,19 @@ scchart DDDPacemaker {
 
 	// control for AVI
     region AVI_PVARP:
-	initial state AVI{
-		initial state init
-	    	--> initConnect with ASense
-	    	--> initConnect with APace;
-	    
-	    connector state initConnect
-	    	--> waitAVI with /AVI_start;
-	    
-	    state waitAVI
+	initial state init
+		--> PVARPConnector with VPace
+		--> PVARPConnector with VSense
+		--> AVIInitConnect with APace
+		--> AVIInitConnect with ASense
+		;
+	
+	connector state AVIInitConnect 
+		--> AVI with /AVI_start;
+	
+	state AVI{
+	  	region AVI:
+	    initial state waitAVI
 	    	--> waitURI with (URI_active && AVI_ex)
 	    	--> VPConnect with LRI_ex/AVI_stop
 	    	--> VPConnect with (!URI_active && AVI_ex);
@@ -77,13 +81,30 @@ scchart DDDPacemaker {
 	    state waitURI
 	    	--> VPConnect with URI_ex;
 	    
-	    state VPConnect
+	    connector state VPConnect
 	    	--> AVIexit with /VPace;
 	    	
 	    final state AVIexit;
+	    
+	    region AVI_Active:
+	    
+	    initial state waitAVI{
+	    	initial state AVI_hold
+	    		--> exitWaitAVI with AVI_ex
+	    		--> AVI_hold with / AVI_active;
+	    	
+	    	final state exitWaitAVI;
+		}
+	    o-> exitAVIActive with VPace
+	    >-> waitURI;
+	    
+	    state waitURI
+	    	--> exitAVIActive with VPace;
+	    
+	    final state exitAVIActive;
 	}
-		o-> PVARPConnector with VSense && !URI_active
-		o-> PVARPConnector with VPace && !URI_active
+		o-> PVARPConnector with VSense / AVI_active
+		o-> PVARPConnector with VPace && !URI_active / AVI_active
     	>-> PVARPConnector;
     
     
@@ -91,7 +112,14 @@ scchart DDDPacemaker {
     	--> waitPVARP with /PVARP_start;
     
     state waitPVARP
-    	--> AVI with PVARP_ex;
+    	--> waitAEI with PVARP_ex;
+    	
+    state waitAEI
+    	--> AVIConnect with ASense
+    	--> AVIConnect with APace;
+    	
+    connector state AVIConnect
+    	--> AVI with /AVI_start;
     
 	// control for AEI
     region AEI:
@@ -107,11 +135,9 @@ scchart DDDPacemaker {
     	--> waitAEI with PVARP_ex;
 
     state waitAEI
-    	--> waitURI with AEI_ex / APace
-   	 	--> waitURI with ASense / AEI_stop;
+    	--> idle with AEI_ex / APace
+   	 	--> idle with ASense / AEI_stop;
     
-	state waitURI
-		--> idle with URI_ex;
 
 	// turning on and off VRP control signals
     region VRP:
@@ -124,10 +150,12 @@ scchart DDDPacemaker {
     	--> waitVRP with / VRP_start;
 
     state waitVRP
-    	--> waitURI with VRP_ex;
+    	--> waitAEI with VRP_ex;
     	
-    state waitURI
-    	--> idle with URI_ex;
+    state waitAEI
+    	--> idle with ASense
+    	-->idle with APace;
+
   }
   o-> top with R;
 
