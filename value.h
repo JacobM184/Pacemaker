@@ -1,10 +1,3 @@
-/*
- * value.h
- *
- *  Created on: 18/10/2020
- *      Author: Biggie Cheese
- */
-
 #ifndef VALUE_H_
 #define VALUE_H_
 
