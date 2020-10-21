@@ -1,44 +1,39 @@
-#ifndef PACEMAKER_H_
-#define PACEMAKER_H_
+/*
+ * value.h
+ *
+ *  Created on: 18/10/2020
+ *      Author: Biggie Cheese
+ */
 
-//=====================================
-//              FUNCTIONS
-//=====================================
-void tick();
-void reset();
+#ifndef VALUE_H_
+#define VALUE_H_
 
-//=================================
-//              INPUT
-//=================================
-extern char R;
-extern char ASense;
-extern char VSense;
+#define TRUE 1
+#define FALSE 0
 
-extern char PVARP_ex;
-extern char AVI_ex;
-extern char URI_ex;
-extern char LRI_ex;
-extern char VRP_ex;
-extern char AEI_ex;
+//The time the light for the pacing gets turned on
+#define PACE_TIME 20
 
-//==================================
-//              OUTPUT
-//==================================
-extern char VPace;
-extern char APace;
+//=========================================
+//              TIMER EXPIRE
+//=========================================
+#define AVI_VALUE 300
+#define VRP_VALUE 150
+#define PVARP_VALUE 50
+#define AEI_VALUE 800
+#define LRI_VALUE 950
+#define URI_VALUE 900
 
-extern char AVI_stop;
-extern char AEI_stop;
-extern char LRI_stop;
-extern char VRP_stop;
-extern char PVARP_stop;
-extern char URI_stop;
+//======================================================
+//              TIMER ACTIVE LED LOCATION
+//======================================================
+#define AVI_LED 0x1
+#define PVARP_LED 0x2
+#define VRP_LED 0x4
+#define AEI_LED 0x8
+#define LRI_LED 0x10
+#define URI_LED 0x20
+#define VPACE_LED 0x1
+#define APACE_LED 0x4
 
-extern char VRP_start;
-extern char PVARP_start;
-extern char URI_start;
-extern char AVI_start;
-extern char AEI_start;
-extern char LRI_start;
-
-#endif /* PACEMAKER_H_ */
+#endif /* VALUE_H_ */
